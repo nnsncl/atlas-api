@@ -14,6 +14,20 @@ class Post(BaseModel):
     rating: Optional[int] = None
 
 
+stored_posts = [
+    {
+        "title": "Some title",
+        "content": "Some content",
+        "id": 1
+    },
+    {
+        "title": "Some other title",
+        "content": "Some other content",
+        "id": 2
+    },
+]
+
+
 @app.get("/")
 def root():
     return {"message": "Atlas API"}
@@ -21,10 +35,10 @@ def root():
 
 @app.get("/posts")
 def get_posts():
-    return {"message": "Post data"}
+    return {"data": stored_posts}
 
 
-@app.post("/create")
+@app.post("/posts")
 def create_post(post: Post):
     print(post.dict())
     return {"data": post}
