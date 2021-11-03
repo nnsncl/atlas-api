@@ -45,3 +45,8 @@ def create_post(post: Post):
 
     stored_posts.append(post_dict)
     return {"data": post_dict}
+
+# In "/posts/{id}", {id} is the Path Parameter
+@app.get("/posts/{id}")
+def get_post(id: int):
+    return {"post_detail": f"Here is post {id}"}
