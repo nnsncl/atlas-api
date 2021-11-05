@@ -4,7 +4,17 @@ from fastapi.params import Body
 from pydantic import BaseModel
 from random import randrange
 
-app = FastAPI()
+app = FastAPI(
+    title="Atlas API",
+    description="This API was built with FastAPI and exists to gather data of any kind from diverse sources.",
+    version="1.0.0",
+    servers=[
+        {
+            "url": "http://localhost:8000",
+            "description": "Development Server"
+        }
+    ]
+)
 
 
 class Post(BaseModel):
