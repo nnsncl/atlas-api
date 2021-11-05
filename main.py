@@ -71,7 +71,6 @@ def get_post(id: int, response: Response):
 @app.delete('/posts/{id}', status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(id: int):
     post_index = find_post_index(id)
-
     if post_index == None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -79,3 +78,17 @@ def delete_post(id: int):
 
     stored_posts.pop(post_index)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@app.put("/posts/{id}")
+def update_post(id: int, post: Post):
+    post_index = find_post_index(id)
+    if post_index == None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Post with an id of {id} wasn't found.")
+
+    post_dict = post.dict()
+    post_dict['id'] = id
+    stored_posts[post_index] = post_dict
+    return {"data": post_dict}
