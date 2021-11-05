@@ -34,6 +34,12 @@ def find_post(id):
             return post
 
 
+def find_post_index(id):
+    for index, post in enumerate(stored_posts):
+        if post['id'] == id:
+            return index
+
+
 @app.get("/")
 def root():
     return {"message": "Atlas API"}
@@ -62,7 +68,14 @@ def get_post(id: int, response: Response):
     return {"data": filtered_post}
 
 
-@app.delete('posts/{id}')
+@app.delete('/posts/{id}', status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(id: int):
-    post_to_delete = find_post(id)
-    return {f"Post {post_to_delete} has been deleted."}
+    post_index = find_post_index(id)
+
+    if post_index == None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Post with an id of {id} wasn't found.")
+
+    stored_posts.pop(post_index)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
