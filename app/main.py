@@ -78,39 +78,25 @@ def root():
 
 @app.get("/posts")
 def get_posts(db: Session = Depends(get_db)):
-    # cursor.execute(""" SELECT * FROM posts """)
-    # posts = cursor.fetchall()
     posts = db.query(models.Post).all()
+
     return {"data": posts}
 
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
-def create_post(post: Post):
-    # Use %s to sanitize inputs and avoid SQL injections.
-    # Values are provided as the second paramter of the cursor.execute method.
-    cursor.execute("""
-        INSERT INTO posts (title, content, published)
-        VALUES (%s, %s, %s)
-        RETURNING *
-    """, (
-        post.title,
-        post.content,
-        post.published,
-    ))
-
-    created_post = cursor.fetchone()
-    connection.commit()
+def create_post(post: Post, db: Session = Depends(get_db)):
+    # Unpack post fields dictionnary to map every inputs provided by the model.
+    created_post = models.Post(**post.dict())
+    db.add(created_post)
+    db.commit()
+    db.refresh(created_post)
 
     return {"data": created_post}
 
 
 @app.get("/posts/{id}")
-def get_post(id: int):
-    cursor.execute("""
-        SELECT * FROM posts WHERE id = %s
-     """, (str(id), ))
-
-    filtered_post = cursor.fetchone()
+def get_post(id: int, db: Session = Depends(get_db)):
+    filtered_post = db.query(models.Post).filter(models.Post.id == id).first()
 
     if not filtered_post:
         raise HTTPException(
