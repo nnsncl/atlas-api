@@ -8,6 +8,9 @@ from psycopg2.extras import RealDictCursor
 import time
 from dotenv import load_dotenv
 import os
+from .database import SessionLocal, engine
+from . import models
+
 
 # Env variables
 load_dotenv()
@@ -17,15 +20,30 @@ db_host = os.environ.get('DB_HOST')
 db_user = os.environ.get('DB_USER')
 db_password = os.environ.get('DB_PASSWORD')
 
+# App variables
+app_title = 'Atlas API'
+app_description = 'This API exists to gather data of any kind from diverse sources.'
+app_version = '1.0.0'
+app_servers = [{"url": host_url, "description": "Development Server"}]
+
+models.Base.metadata.create_all(bind=engine)
+
 # Init FastAPI app
 app = FastAPI(
-    title="Atlas API",
-    description="This API was built with FastAPI and exists to gather data of any kind from diverse sources.",
-    version="1.0.0",
-    servers=[{
-        "url": host_url,
-        "description": "Development Server"
-    }])
+    title=app_title,
+    description=app_description,
+    version=app_version,
+    servers=app_servers)
+
+# Dependency
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 
 class Post(BaseModel):
@@ -34,9 +52,10 @@ class Post(BaseModel):
     published: bool = True
 
 
-# Loop over the connection until it's on,
-# otherwise run this code again every 2 seconds.
+# Connect to database
 while True:
+    # Loop over the connection until it's on,
+    # otherwise run this code again every 2 seconds.
     try:
         connection = psycopg2.connect(
             host=db_host,
