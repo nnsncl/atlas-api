@@ -11,7 +11,7 @@ import os
 
 # Env variables
 load_dotenv()
-host_url=os.environ.get('HOST_URL')
+host_url = os.environ.get('HOST_URL')
 db_name = os.environ.get('DB_NAME')
 db_host = os.environ.get('DB_HOST')
 db_user = os.environ.get('DB_USER')
@@ -26,6 +26,8 @@ app = FastAPI(
         "url": host_url,
         "description": "Development Server"
     }])
+
+
 class Post(BaseModel):
     title: str
     content: str
@@ -84,7 +86,9 @@ def root():
 
 @app.get("/posts")
 def get_posts():
-    return {"data": stored_posts}
+    cursor.execute(""" SELECT * FROM posts """)
+    posts = cursor.fetchall()
+    return {"data": posts}
 
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
