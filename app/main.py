@@ -3,25 +3,52 @@ from fastapi import FastAPI, Response, status, HTTPException
 from fastapi.params import Body
 from pydantic import BaseModel
 from random import randrange
+import psycopg2
+from psycopg2.extras import RealDictCursor
+import time
+from dotenv import load_dotenv
+import os
 
+# Env variables
+load_dotenv()
+host_url=os.environ.get('HOST_URL')
+db_name = os.environ.get('DB_NAME')
+db_host = os.environ.get('DB_HOST')
+db_user = os.environ.get('DB_USER')
+db_password = os.environ.get('DB_PASSWORD')
+
+# Init FastAPI app
 app = FastAPI(
     title="Atlas API",
     description="This API was built with FastAPI and exists to gather data of any kind from diverse sources.",
     version="1.0.0",
-    servers=[
-        {
-            "url": "http://localhost:8000",
-            "description": "Development Server"
-        }
-    ]
-)
-
-
+    servers=[{
+        "url": host_url,
+        "description": "Development Server"
+    }])
 class Post(BaseModel):
     title: str
     content: str
     published: bool = True
-    rating: Optional[int] = None
+
+
+# Loop over the connection until it's on,
+# otherwise run this code again every 2 seconds.
+while True:
+    try:
+        connection = psycopg2.connect(
+            host=db_host,
+            database=db_name,
+            user=db_user,
+            password=db_password,
+            cursor_factory=RealDictCursor)
+        cursor = connection.cursor()
+        print('Connected to Atlas 🌍')
+        break
+    except Exception as error:
+        print('Connection to Atlas failed.')
+        print('message', error)
+        time.sleep(2)
 
 
 stored_posts = [
