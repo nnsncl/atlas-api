@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, status, HTTPException, Response
 from sqlalchemy.orm import Session
 from starlette.status import HTTP_404_NOT_FOUND
 
-from .. import database, schemas, models, utils
+from .. import database, schemas, models, utils, oauth2
 
 router = APIRouter(tags=['Authentication'])
 
@@ -23,4 +23,6 @@ def login(user_credentials: schemas.UserLogin, db: Session = Depends(database.ge
             status_code=HTTP_404_NOT_FOUND,
             detail=f"Invalid Credentils")
 
-    return {"token": "sample"}
+    access_token = oauth2.create_access_token(data={"user_id": user.id})
+
+    return {"access_token": access_token, "token_type": "bearer"}
