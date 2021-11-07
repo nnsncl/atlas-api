@@ -1,5 +1,5 @@
 import time
-from random import randrange
+from typing import List
 
 import os
 from dotenv import load_dotenv
@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from .database import engine, get_db
 from . import models, schemas
+
 
 # Env variables
 load_dotenv()
@@ -57,19 +58,22 @@ while True:
         time.sleep(2)
 
 
-@app.get("/")
+# Methods
+@app.get("/", response_model=List[schemas.PostReponse])
 def root():
     return {"message": "Welcome to Atlas 🌍"}
 
 
 @app.get("/posts")
+# Get all items
 def get_posts(db: Session = Depends(get_db)):
     posts = db.query(models.Post).all()
 
-    return {"data": posts}
+    return posts
 
 
-@app.post("/posts", status_code=status.HTTP_201_CREATED)
+@app.post("/posts", status_code=status.HTTP_201_CREATED, response_model=schemas.PostReponse)
+# Create an item
 def create_post(post: schemas.PostCreate, db: Session = Depends(get_db)):
     # Unpack post fields dictionnary to map every inputs provided by the model.
     created_post = models.Post(**post.dict())
@@ -77,10 +81,11 @@ def create_post(post: schemas.PostCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(created_post)
 
-    return {"data": created_post}
+    return created_post
 
 
-@app.get("/posts/{id}")
+@app.get("/posts/{id}", response_model=schemas.PostReponse)
+# Get a single item by ID
 def get_post(id: int, db: Session = Depends(get_db)):
     filtered_post = db.query(models.Post).filter(models.Post.id == id).first()
 
@@ -89,10 +94,11 @@ def get_post(id: int, db: Session = Depends(get_db)):
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Post with an id of {id} wasn't found.")
 
-    return {"data": filtered_post}
+    return filtered_post
 
 
 @app.delete('/posts/{id}', status_code=status.HTTP_204_NO_CONTENT)
+# Delete an item by ID
 def delete_post(id: int, db: Session = Depends(get_db)):
     deleted_post = db.query(models.Post).filter(models.Post.id == id)
 
@@ -107,7 +113,8 @@ def delete_post(id: int, db: Session = Depends(get_db)):
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@app.put("/posts/{id}")
+@app.put("/posts/{id}", response_model=schemas.PostReponse)
+# Update an item by ID
 def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)):
     query = db.query(models.Post).filter(models.Post.id == id)
     filtered_post = query.first()
@@ -120,4 +127,4 @@ def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)
     query.update(post.dict(), synchronize_session=False)
     db.commit()
 
-    return {"data": query.first()}
+    return query.first()
