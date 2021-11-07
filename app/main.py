@@ -105,6 +105,7 @@ def create_post(post: Post):
         post.published,
     ))
     created_post = cursor.fetchone()
+    connection.commit()
     return {"data": created_post}
 
 
