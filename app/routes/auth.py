@@ -18,12 +18,12 @@ def login(
 
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail=f"Invalid Credentils")
 
     if not utils.verify(user_credentials.password, user.password):
         raise HTTPException(
-            status_code=HTTP_404_NOT_FOUND,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail=f"Invalid Credentils")
 
     access_token = oauth2.create_access_token(data={"user_id": user.id})
