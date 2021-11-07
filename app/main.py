@@ -1,18 +1,16 @@
 import time
-from typing import List
 
 import os
 from dotenv import load_dotenv
 
-from fastapi import FastAPI, Response, status, HTTPException, Depends
+from fastapi import FastAPI
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
-from sqlalchemy.orm import Session
-
-from .database import engine, get_db
-from . import models, schemas, utils
+from .database import engine
+from .routes import post, user
+from . import models
 
 
 # Env variables
@@ -57,102 +55,9 @@ while True:
         print('message', error)
         time.sleep(2)
 
+app.include_router(post.router)
+app.include_router(user.router)
 
-# Methods
-@app.get("/", response_model=List[schemas.PostReponse])
+@app.get("/")
 def root():
     return {"message": "Welcome to Atlas 🌍"}
-
-
-@app.get("/posts")
-# Get all items
-def get_posts(db: Session = Depends(get_db)):
-    posts = db.query(models.Post).all()
-
-    return posts
-
-
-@app.post("/posts", status_code=status.HTTP_201_CREATED, response_model=schemas.PostReponse)
-# Create an item
-def create_post(post: schemas.PostCreate, db: Session = Depends(get_db)):
-    # Unpack post fields dictionnary to map every inputs provided by the model.
-    created_post = models.Post(**post.dict())
-    db.add(created_post)
-    db.commit()
-    db.refresh(created_post)
-
-    return created_post
-
-
-@app.get("/posts/{id}", response_model=schemas.PostReponse)
-# Get a single item by ID
-def get_post(id: int, db: Session = Depends(get_db)):
-    filtered_post = db.query(models.Post).filter(models.Post.id == id).first()
-
-    if not filtered_post:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Post with an id of {id} wasn't found.")
-
-    return filtered_post
-
-
-@app.delete('/posts/{id}', status_code=status.HTTP_204_NO_CONTENT)
-# Delete an item by ID
-def delete_post(id: int, db: Session = Depends(get_db)):
-    deleted_post = db.query(models.Post).filter(models.Post.id == id)
-
-    if deleted_post.first() == None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Post with an id of {id} wasn't found.")
-
-    deleted_post.delete(synchronize_session=False)
-    db.commit()
-
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-
-@app.put("/posts/{id}", response_model=schemas.PostReponse)
-# Update an item by ID
-def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)):
-    query = db.query(models.Post).filter(models.Post.id == id)
-    filtered_post = query.first()
-
-    if filtered_post == None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Post with an id of {id} wasn't found.")
-
-    query.update(post.dict(), synchronize_session=False)
-    db.commit()
-
-    return query.first()
-
-
-@app.post("/users", status_code=status.HTTP_201_CREATED, response_model=schemas.UserOutput)
-# Create a new user
-def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    # Hash user password and update user.password before the payload is submit.
-    hashed_password = utils.hash(user.password)
-    user.password = hashed_password
-
-    created_user = models.User(**user.dict())
-    db.add(created_user)
-    db.commit()
-    db.refresh(created_user)
-
-    return created_user
-
-
-@app.get('/users/{id}', response_model=schemas.UserOutput)
-def get_user(id: int,  db: Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.id == id).first()
-
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"User with an id of {id} wasn't found.")
-
-    return user
- 
