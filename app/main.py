@@ -93,10 +93,19 @@ def get_posts():
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
 def create_post(post: Post):
-    post_dict = post.dict()
-    post_dict['id'] = randrange(0, 10e9)
-    stored_posts.append(post_dict)
-    return {"data": post_dict}
+    # Use %s to sanitize inputs and avoid SQL injections.
+    # Values are provided as the second paramter of the cursor.execute method.
+    cursor.execute("""
+        INSERT INTO posts (title, content, published)
+        VALUES (%s, %s, %s)
+        RETURNING *
+    """, (
+        post.title,
+        post.content,
+        post.published,
+    ))
+    created_post = cursor.fetchone()
+    return {"data": created_post}
 
 
 @app.get("/posts/{id}")
