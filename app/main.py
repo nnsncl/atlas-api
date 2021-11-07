@@ -1,6 +1,5 @@
 import time
 from typing import List
-from passlib.context import CryptContext
 
 import os
 from dotenv import load_dotenv
@@ -13,7 +12,7 @@ from psycopg2.extras import RealDictCursor
 from sqlalchemy.orm import Session
 
 from .database import engine, get_db
-from . import models, schemas
+from . import models, schemas, utils
 
 
 # Env variables
@@ -31,7 +30,6 @@ app_version = '1.0.0'
 app_servers = [{"url": host_url, "description": "Development Server"}]
 
 models.Base.metadata.create_all(bind=engine)
-password_context = CryptContext(schemes=["bcrypt"], deprecated='auto')
 
 # Init FastAPI app
 app = FastAPI(
@@ -136,7 +134,7 @@ def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)
 # Create a new user
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     # Hash user password and update user.password before the payload is submit.
-    hashed_password = password_context.hash(user.password)
+    hashed_password = utils.hash(user.password)
     user.password = hashed_password
 
     created_user = models.User(**user.dict())
