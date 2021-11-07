@@ -40,3 +40,7 @@ class UserOutput(BaseModel):
     class Config:
         # Convert SQLAlchemy query to dict
         orm_mode = True
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
