@@ -4,9 +4,12 @@ from ..database import get_db
 from fastapi import status, HTTPException, Depends, APIRouter
 from sqlalchemy.orm import Session
 
-router = APIRouter()
+router = APIRouter(
+    prefix='/users'
+)
 
-@router.post("/users", status_code=status.HTTP_201_CREATED, response_model=schemas.UserOutput)
+
+@router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.UserOutput)
 # Create a new user
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     # Hash user password and update user.password before the payload is submit.
@@ -21,7 +24,7 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     return created_user
 
 
-@router.get('/users/{id}', response_model=schemas.UserOutput)
+@router.get('/{id}', response_model=schemas.UserOutput)
 def get_user(id: int,  db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.id == id).first()
 
@@ -31,4 +34,3 @@ def get_user(id: int,  db: Session = Depends(get_db)):
             detail=f"User with an id of {id} wasn't found.")
 
     return user
- 
