@@ -16,11 +16,6 @@ from .database import engine, get_db
 from . import models
 
 
-
-# https://www.youtube.com/watch?v=0sOvCWFmrtA&t=6776s&ab_channel=freeCodeCamp.org
-# 5:00:59 
-
-
 # Env variables
 load_dotenv()
 host_url = os.environ.get('HOST_URL')
@@ -114,7 +109,7 @@ def delete_post(id: int, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Post with an id of {id} wasn't found.")
-    
+
     deleted_post.delete(synchronize_session=False)
     db.commit()
 
@@ -122,24 +117,16 @@ def delete_post(id: int, db: Session = Depends(get_db)):
 
 
 @app.put("/posts/{id}")
-def update_post(id: int, post: Post):
-    cursor.execute("""
-        UPDATE posts SET title = %s, content = %s, published = %s
-            WHERE id = %s
-            RETURNING *
-    """, (
-        post.title,
-        post.content,
-        post.published,
-        str(id)
-    ))
+def update_post(id: int, post: Post, db: Session = Depends(get_db)):
+    query = db.query(models.Post).filter(models.Post.id == id)
+    filtered_post = query.first()
 
-    updated_post = cursor.fetchone()
-    connection.commit()
-
-    if updated_post == None:
+    if filtered_post == None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Post with an id of {id} wasn't found.")
 
-    return {"data": updated_post}
+    query.update(post.dict(), synchronize_session=False)
+    db.commit()
+
+    return {"data": query.first()}
