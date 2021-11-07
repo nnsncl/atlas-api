@@ -6,7 +6,8 @@ from fastapi import Response, status, HTTPException, Depends, APIRouter
 from sqlalchemy.orm import Session
 
 router = APIRouter(
-    prefix='/posts'
+    prefix='/posts',
+    tags=['Posts']
 )
 
 
