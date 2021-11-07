@@ -1,5 +1,6 @@
 import time
 from typing import List
+from passlib.context import CryptContext
 
 import os
 from dotenv import load_dotenv
@@ -30,6 +31,7 @@ app_version = '1.0.0'
 app_servers = [{"url": host_url, "description": "Development Server"}]
 
 models.Base.metadata.create_all(bind=engine)
+password_context = CryptContext(schemes=["bcrypt"], deprecated='auto')
 
 # Init FastAPI app
 app = FastAPI(
@@ -133,6 +135,10 @@ def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)
 @app.post("/users", status_code=status.HTTP_201_CREATED, response_model=schemas.UserOutput)
 # Create a new user
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    # Hash user password and update user.password before the payload is submit.
+    hashed_password = password_context.hash(user.password)
+    user.password = hashed_password
+
     created_user = models.User(**user.dict())
     db.add(created_user)
     db.commit()
