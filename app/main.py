@@ -53,41 +53,16 @@ while True:
         time.sleep(2)
 
 
-stored_posts = [
-    {
-        "title": "Some title",
-        "content": "Some content",
-        "id": 1
-    },
-    {
-        "title": "Some other title",
-        "content": "Some other content",
-        "id": 2
-    },
-]
-
-
-def find_post(id):
-    for post in stored_posts:
-        if post['id'] == id:
-            return post
-
-
-def find_post_index(id):
-    for index, post in enumerate(stored_posts):
-        if post['id'] == id:
-            return index
-
-
 @app.get("/")
 def root():
-    return {"message": "Atlas API"}
+    return {"message": "Welcome to Atlas 🌍"}
 
 
 @app.get("/posts")
 def get_posts():
     cursor.execute(""" SELECT * FROM posts """)
     posts = cursor.fetchall()
+
     return {"data": posts}
 
 
@@ -104,8 +79,10 @@ def create_post(post: Post):
         post.content,
         post.published,
     ))
+
     created_post = cursor.fetchone()
     connection.commit()
+
     return {"data": created_post}
 
 
@@ -113,8 +90,8 @@ def create_post(post: Post):
 def get_post(id: int):
     cursor.execute("""
         SELECT * FROM posts WHERE id = %s
-     """, (str(id),
-     ))
+     """, (str(id), ))
+
     filtered_post = cursor.fetchone()
 
     if not filtered_post:
@@ -127,25 +104,42 @@ def get_post(id: int):
 
 @app.delete('/posts/{id}', status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(id: int):
-    post_index = find_post_index(id)
-    if post_index == None:
+
+    cursor.execute("""
+        DELETE FROM posts WHERE id = %s
+            RETURNING *
+    """, (str(id), ))
+
+    deleted_post = cursor.fetchone()
+    connection.commit()
+
+    if deleted_post == None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Post with an id of {id} wasn't found.")
 
-    stored_posts.pop(post_index)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @app.put("/posts/{id}")
 def update_post(id: int, post: Post):
-    post_index = find_post_index(id)
-    if post_index == None:
+    cursor.execute("""
+        UPDATE posts SET title = %s, content = %s, published = %s
+            WHERE id = %s
+            RETURNING *
+    """, (
+        post.title,
+        post.content,
+        post.published,
+        str(id)
+    ))
+
+    updated_post = cursor.fetchone()
+    connection.commit()
+
+    if updated_post == None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Post with an id of {id} wasn't found.")
 
-    post_dict = post.dict()
-    post_dict['id'] = id
-    stored_posts[post_index] = post_dict
-    return {"data": post_dict}
+    return {"data": updated_post}
