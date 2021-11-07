@@ -16,6 +16,11 @@ from .database import engine, get_db
 from . import models
 
 
+
+# https://www.youtube.com/watch?v=0sOvCWFmrtA&t=6776s&ab_channel=freeCodeCamp.org
+# 5:00:59 
+
+
 # Env variables
 load_dotenv()
 host_url = os.environ.get('HOST_URL')
@@ -71,16 +76,11 @@ def root():
     return {"message": "Welcome to Atlas 🌍"}
 
 
-# @app.get("/sqlalchemy")
-# def test_post(db: Session = Depends(get_db)):
-#     return {"status": 'success'}
-
-
 @app.get("/posts")
-def get_posts():
-    cursor.execute(""" SELECT * FROM posts """)
-    posts = cursor.fetchall()
-
+def get_posts(db: Session = Depends(get_db)):
+    # cursor.execute(""" SELECT * FROM posts """)
+    # posts = cursor.fetchall()
+    posts = db.query(models.Post).all()
     return {"data": posts}
 
 
