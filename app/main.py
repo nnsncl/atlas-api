@@ -1,14 +1,18 @@
-from typing import Optional
-from fastapi import FastAPI, Response, status, HTTPException
-from fastapi.params import Body
-from pydantic import BaseModel
+import time
 from random import randrange
+
+import os
+from dotenv import load_dotenv
+
+from fastapi import FastAPI, Response, status, HTTPException, Depends
+
 import psycopg2
 from psycopg2.extras import RealDictCursor
-import time
-from dotenv import load_dotenv
-import os
-from .database import SessionLocal, engine
+
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
+from .database import engine, get_db
 from . import models
 
 
@@ -34,16 +38,6 @@ app = FastAPI(
     description=app_description,
     version=app_version,
     servers=app_servers)
-
-# Dependency
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 class Post(BaseModel):
@@ -75,6 +69,11 @@ while True:
 @app.get("/")
 def root():
     return {"message": "Welcome to Atlas 🌍"}
+
+
+# @app.get("/sqlalchemy")
+# def test_post(db: Session = Depends(get_db)):
+#     return {"status": 'success'}
 
 
 @app.get("/posts")
