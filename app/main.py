@@ -9,12 +9,10 @@ from fastapi import FastAPI, Response, status, HTTPException, Depends
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
-from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from .database import engine, get_db
-from . import models
-
+from . import models, schemas
 
 # Env variables
 load_dotenv()
@@ -38,13 +36,6 @@ app = FastAPI(
     description=app_description,
     version=app_version,
     servers=app_servers)
-
-
-class Post(BaseModel):
-    title: str
-    content: str
-    published: bool = True
-
 
 # Connect to database
 while True:
@@ -79,7 +70,7 @@ def get_posts(db: Session = Depends(get_db)):
 
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
-def create_post(post: Post, db: Session = Depends(get_db)):
+def create_post(post: schemas.PostCreate, db: Session = Depends(get_db)):
     # Unpack post fields dictionnary to map every inputs provided by the model.
     created_post = models.Post(**post.dict())
     db.add(created_post)
@@ -117,7 +108,7 @@ def delete_post(id: int, db: Session = Depends(get_db)):
 
 
 @app.put("/posts/{id}")
-def update_post(id: int, post: Post, db: Session = Depends(get_db)):
+def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)):
     query = db.query(models.Post).filter(models.Post.id == id)
     filtered_post = query.first()
 
