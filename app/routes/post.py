@@ -24,9 +24,9 @@ def get_posts(db: Session = Depends(get_db)):
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.PostReponse)
 # Create an item
 def create_post(
-    post: schemas.PostCreate,
-    db: Session = Depends(get_db),
-    user_id: int = Depends(oauth2.get_current_user)):
+        post: schemas.PostCreate,
+        db: Session = Depends(get_db),
+        current_user: int = Depends(oauth2.get_current_user)):
 
     # Unpack post fields dictionnary to map every inputs provided by the model.
     created_post = models.Post(**post.dict())
@@ -53,9 +53,9 @@ def get_post(id: int, db: Session = Depends(get_db)):
 @router.delete('/{id}', status_code=status.HTTP_204_NO_CONTENT)
 # Delete an item by ID
 def delete_post(
-    id: int,
-    db: Session = Depends(get_db),
-    user_id: int = Depends(oauth2.get_current_user)):
+        id: int,
+        db: Session = Depends(get_db),
+        current_user: int = Depends(oauth2.get_current_user)):
     deleted_post = db.query(models.Post).filter(models.Post.id == id)
 
     if deleted_post.first() == None:
@@ -72,9 +72,9 @@ def delete_post(
 @router.put("/{id}", response_model=schemas.PostReponse)
 # Update an item by ID
 def update_post(
-    id: int, post: schemas.PostCreate,
-    db: Session = Depends(get_db),
-    user_id: int = Depends(oauth2.get_current_user)):
+        id: int, post: schemas.PostCreate,
+        db: Session = Depends(get_db),
+        current_user: int = Depends(oauth2.get_current_user)):
     query = db.query(models.Post).filter(models.Post.id == id)
     filtered_post = query.first()
 
