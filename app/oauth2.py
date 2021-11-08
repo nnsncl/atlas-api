@@ -13,7 +13,7 @@ from . import schemas
 load_dotenv()
 OAUTH_SECRET_KEY = os.environ.get('OAUTH_SECRET_KEY')
 OAUTH_ALGORITHM = os.environ.get('OAUTH_ALGORITHM')
-ACCESS_TOKEN_TTL_MINS = 30
+ACCESS_TOKEN_TTL_MINS = 60
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='login')
 
@@ -21,8 +21,8 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl='login')
 def create_access_token(data: dict):
     encode_input = data.copy()
 
-    expire_at = str(datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_TTL_MINS))
-    encode_input.update({"expire_at": expire_at})
+    expire_at = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_TTL_MINS)
+    encode_input.update({"exp": expire_at})
 
     encoded_jwt = jwt.encode(
         encode_input, OAUTH_SECRET_KEY, algorithm=OAUTH_ALGORITHM)
